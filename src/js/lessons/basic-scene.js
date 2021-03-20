@@ -3,25 +3,56 @@ import * as T from 'three';
 import gsap from 'gsap';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
-
-const sizes = {
-    width: 800,
-    height: 600
-};
-
-const cursor = {
-    x: 0,
-    y: 0
-};
-
-window.addEventListener('mousemove', (e) => {
-    cursor.x = e.clientX / sizes.width - 0.5;
-    cursor.y = e.clientY / sizes.height - 0.5;
-});
-
-const canvas = document.querySelector('.webgl');
-
 function basicScene() {
+
+    const sizes = {
+        width: window.innerWidth,
+        height: window.innerHeight
+    };
+
+    const cursor = {
+        x: 0,
+        y: 0
+    };
+
+    window.addEventListener('mousemove', (e) => {
+        cursor.x = e.clientX / sizes.width - 0.5;
+        cursor.y = e.clientY / sizes.height - 0.5;
+    });
+    window.addEventListener('resize', () => {
+        console.log('resize');
+        sizes.width = window.innerWidth;
+        sizes.height = window.innerHeight;
+
+        // Update camera
+        camera.aspect = sizes.width / sizes.height;
+        camera.updateProjectionMatrix();
+
+        // Update renderer
+        renderer.setSize(sizes.width, sizes.height);
+    });
+    window.addEventListener('dblclick', function () {
+        const fillscreenElement = document.fullscreenElement || document.webkitFullscreenElement;
+        if (!fillscreenElement) {
+            if (canvas.requestFullscreen) {
+                canvas.requestFullscreen();
+            }
+            else if (canvas.webkitRequestFullscreen) {
+                canvas.webkitRequestFullscreen();
+            }
+        }
+        else {
+            if(document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+            else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            }
+        }
+    });
+
+    const canvas = document.querySelector('.webgl');
+
     const scene = new T.Scene();
 
     // Axes helper
@@ -52,14 +83,17 @@ function basicScene() {
     // const aspectRatio = sizes.width / sizes.height;
     // const camera = new T.OrthographicCamera(-1 * aspectRatio, 1 * aspectRatio, 1, -1, 0.1, 40);
     scene.add(camera);
+    camera.position.z = 5;
 
     // Controls 
     const controls = new OrbitControls(camera, canvas);
+    controls.enableDamping = true;
 
     const renderer = new T.WebGLRenderer({
         canvas: canvas
     });
     renderer.setSize(sizes.width, sizes.height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
 
     // Time
@@ -90,7 +124,8 @@ function basicScene() {
         // camera.position.y = cursor.y * 5;
         // camera.position.y = cursor.y * 10;
         // camera.lookAt(group.position);
-        camera.lookAt(new T.Vector3());
+        // camera.lookAt(new T.Vector3());
+        controls.update();
         renderer.render(scene, camera);
         window.requestAnimationFrame(tick);
     };
