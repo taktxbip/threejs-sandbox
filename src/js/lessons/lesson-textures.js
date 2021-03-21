@@ -32,6 +32,8 @@ loadingManager.onProgress = () => console.log('onProgress');
 loadingManager.onError = () => console.log('onError');
 
 const textureLoader = new THREE.TextureLoader(loadingManager);
+const cubeTextureLoader = new THREE.CubeTextureLoader();
+
 const colorTexture = textureLoader.load('/src/images/door/color.jpg');
 const alphaTexture = textureLoader.load('/src/images/door/alpha.jpg');
 const ambientOcclusionTexture = textureLoader.load('/src/images/door/ambientOcclusion.jpg');
@@ -39,15 +41,23 @@ const heightTexture = textureLoader.load('/src/images/door/height.jpg');
 const metalnessTexture = textureLoader.load('/src/images/door/metalness.jpg');
 const roughnessTexture = textureLoader.load('/src/images/door/roughness.jpg');
 const normalTexture = textureLoader.load('/src/images/door/normal.jpg');
+const matcapTexture = textureLoader.load('/src/images/matcaps/2.png');
+const gradientTexture = textureLoader.load('/src/images/gradients/5.jpg');
+gradientTexture.minFilter = THREE.NearestFilter;
+gradientTexture.magFilter = THREE.NearestFilter;
 
-// colorTexture.repeat.x = 2;
-// colorTexture.repeat.y = 3;
-// colorTexture.wrapS = THREE.RepeatWrapping;
-// colorTexture.wrapT = THREE.MirroredRepeatWrapping;
-// colorTexture.offset.x = 0.5;
-colorTexture.rotation = Math.PI * 0.25;
-colorTexture.center.x = 0.5;
-colorTexture.center.y = 0.5;
+const environmentMapTexture = cubeTextureLoader.load([
+    '/src/images/environmentMaps/0/px.jpg',
+    '/src/images/environmentMaps/0/nx.jpg',
+    '/src/images/environmentMaps/0/py.jpg',
+    '/src/images/environmentMaps/0/ny.jpg',
+    '/src/images/environmentMaps/0/pz.jpg',
+    '/src/images/environmentMaps/0/nz.jpg'
+]);
+
+// colorTexture.rotation = Math.PI * 0.25;
+// colorTexture.center.x = 0.5;
+// colorTexture.center.y = 0.5;
 colorTexture.minFilter = THREE.NearestFilter;
 
 function lessonTextures() {
@@ -85,34 +95,73 @@ function lessonTextures() {
 
     const scene = new THREE.Scene();
 
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+    const pointLight = new THREE.PointLight(0xffffff, 0.5);
+    pointLight.position.x = 2;
+    pointLight.position.y = 3;
+    pointLight.position.z = 4;
+    scene.add(pointLight);
+
     // Axes helper
     // const axesHelper = new THREE.AxesHelper(3);
     // scene.add(axesHelper);
 
-    const geometry = new THREE.BoxBufferGeometry(1, 1, 1);
-    const material = new THREE.MeshBasicMaterial({ map: colorTexture });
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.position.y = 0.5;
+    // material.transparent = true;
+    // material.side = THREE.DoubleSide;
 
-    const floor = new THREE.Mesh(
-        new THREE.BoxBufferGeometry(100, 0.1, 100),
-        new THREE.MeshBasicMaterial({ color: '#f5f5f5' })
+    // const material = new THREE.MeshNormalMaterial();
+    // const material = new THREE.MeshDepthMaterial();
+    // material.shininess = 100;
+    // material.specular = new THREE.Color(0xff0000);
+    // const material = new THREE.MeshToonMaterial();
+    // material.gradientMap = gradientTexture;
+    const material = new THREE.MeshStandardMaterial();
+    material.metalness = 0.7;
+    material.roughness = 0.2;
+    material.envMap = environmentMapTexture;
+    // material.map = colorTexture;
+    // material.aoMap = ambientOcclusionTexture;
+    // material.aoMapIntensity = 1;
+    // material.displacementMap = heightTexture;
+    // material.displacementScale = 0.05;
+    // material.metalnessMap = metalnessTexture;
+    // material.roughnessMap = roughnessTexture;
+    // material.normalMap = normalTexture;
+    // material.normalScale.set(0.1, 0.1);
+    // material.alphaMap = alphaTexture;
+    // material.transparent = true;
+
+
+    gui.add(material, 'metalness', 0, 1, 0.001);
+    gui.add(material, 'roughness', 0, 1, 0.001);
+    gui.add(material, 'aoMapIntensity', 0, 1, 0.001);
+    gui.add(material, 'displacementScale', 0, 1, 0.001);
+
+    material.matcap = matcapTexture;
+    // material.flatShading = true;
+
+    const plane = new THREE.Mesh(
+        new THREE.PlaneBufferGeometry(1, 1, 50, 50),
+        material
     );
-    scene.add(floor);
+    const sphere = new THREE.Mesh(
+        new THREE.SphereBufferGeometry(0.5, 128, 128),
+        material
+    );
+    const torus = new THREE.Mesh(
+        new THREE.TorusBufferGeometry(0.3, 0.2, 64, 128),
+        material
+    );
+    scene.add(plane, sphere, torus);
+    plane.position.x = 1.5;
+    sphere.position.x = -1.5;
 
-    parameters.spin = () => {
-        gsap.to(mesh.rotation, { y: 10, duration: 1, delay: 1 });
-    };
-    scene.add(mesh);
+    plane.geometry.setAttribute('uv2', new THREE.BufferAttribute(plane.geometry.attributes.uv.array, 2));
+    torus.geometry.setAttribute('uv2', new THREE.BufferAttribute(torus.geometry.attributes.uv.array, 2));
+    sphere.geometry.setAttribute('uv2', new THREE.BufferAttribute(sphere.geometry.attributes.uv.array, 2));
 
-
-    gui.add(mesh.position, 'y', -3, 3, 0.01).name('Axis Y');
-    gui.add(mesh.position, 'x', -3, 3, 0.01);
-    gui.add(mesh.position, 'z', -3, 3, 0.01);
-    gui.add(mesh, 'visible');
-    gui.add(material, 'wireframe');
     gui.addColor(parameters, 'color').onChange(() => material.color.set(parameters.color));
-    gui.add(parameters, 'spin');
 
     scene.add(camera);
     camera.position.z = 3;
@@ -135,7 +184,14 @@ function lessonTextures() {
     const tick = () => {
 
         // Clock
-        // const elapsedTime = clock.getElapsedTime();
+        const elapsedTime = clock.getElapsedTime();
+        sphere.rotation.y = 0.1 * elapsedTime;
+        torus.rotation.y = 0.1 * elapsedTime;
+        plane.rotation.y = 0.1 * elapsedTime;
+
+        sphere.rotation.x = 0.15 * elapsedTime;
+        torus.rotation.x = 0.15 * elapsedTime;
+        plane.rotation.x = 0.15 * elapsedTime;
 
         controls.update();
         renderer.render(scene, camera);
