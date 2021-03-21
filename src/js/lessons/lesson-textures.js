@@ -4,7 +4,10 @@ import gsap from 'gsap';
 import * as dat from 'dat.gui';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
+// import imagew from '/src/images/door/color.jpg';
+// console.log(imagew);
 const gui = new dat.GUI();
+gui.hide();
 
 const parameters = {
     color: 0x9cb1
@@ -19,8 +22,35 @@ const canvas = document.querySelector('.webgl');
 const renderer = new THREE.WebGLRenderer({ canvas: canvas });
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 200);
 
+/*
+* Textures
+*/
+const loadingManager = new THREE.LoadingManager();
+loadingManager.onStart = () => console.log('onStart');
+loadingManager.onLoaded = () => console.log('onLoaded');
+loadingManager.onProgress = () => console.log('onProgress');
+loadingManager.onError = () => console.log('onError');
 
-function lessonGeometries() {
+const textureLoader = new THREE.TextureLoader(loadingManager);
+const colorTexture = textureLoader.load('/src/images/door/color.jpg');
+const alphaTexture = textureLoader.load('/src/images/door/alpha.jpg');
+const ambientOcclusionTexture = textureLoader.load('/src/images/door/ambientOcclusion.jpg');
+const heightTexture = textureLoader.load('/src/images/door/height.jpg');
+const metalnessTexture = textureLoader.load('/src/images/door/metalness.jpg');
+const roughnessTexture = textureLoader.load('/src/images/door/roughness.jpg');
+const normalTexture = textureLoader.load('/src/images/door/normal.jpg');
+
+// colorTexture.repeat.x = 2;
+// colorTexture.repeat.y = 3;
+// colorTexture.wrapS = THREE.RepeatWrapping;
+// colorTexture.wrapT = THREE.MirroredRepeatWrapping;
+// colorTexture.offset.x = 0.5;
+colorTexture.rotation = Math.PI * 0.25;
+colorTexture.center.x = 0.5;
+colorTexture.center.y = 0.5;
+colorTexture.minFilter = THREE.NearestFilter;
+
+function lessonTextures() {
 
     window.addEventListener('resize', () => {
         sizes.width = window.innerWidth;
@@ -56,29 +86,22 @@ function lessonGeometries() {
     const scene = new THREE.Scene();
 
     // Axes helper
-    const axesHelper = new THREE.AxesHelper(3);
-    scene.add(axesHelper);
+    // const axesHelper = new THREE.AxesHelper(3);
+    // scene.add(axesHelper);
 
-    const geometry = new THREE.BufferGeometry();
-
-    const count = 1000;
-    const vertices = new Float32Array(count * 3 * 3);
-
-    for (let i = 0; i < count * 3 * 3; i++) {
-        vertices[i] = (Math.random() - 0.5) * 4;
-    }
-
-    const positionsAttribute = new THREE.BufferAttribute(vertices, 3);
-
-    geometry.setAttribute('position', positionsAttribute);
-
-
-
-    const material = new THREE.MeshBasicMaterial({ color: parameters.color, wireframe: true });
+    const geometry = new THREE.BoxBufferGeometry(1, 1, 1);
+    const material = new THREE.MeshBasicMaterial({ map: colorTexture });
     const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.y = 0.5;
+
+    const floor = new THREE.Mesh(
+        new THREE.BoxBufferGeometry(100, 0.1, 100),
+        new THREE.MeshBasicMaterial({ color: '#f5f5f5' })
+    );
+    scene.add(floor);
 
     parameters.spin = () => {
-        gsap.to(mesh.rotation, { y: 10, duration : 1, delay: 1 });
+        gsap.to(mesh.rotation, { y: 10, duration: 1, delay: 1 });
     };
     scene.add(mesh);
 
@@ -92,7 +115,9 @@ function lessonGeometries() {
     gui.add(parameters, 'spin');
 
     scene.add(camera);
-    camera.position.z = 2;
+    camera.position.z = 3;
+    camera.position.y = 1;
+    camera.position.x = 1;
 
     // Controls 
     const controls = new OrbitControls(camera, canvas);
@@ -120,4 +145,4 @@ function lessonGeometries() {
     tick();
 }
 
-export default lessonGeometries;
+export default lessonTextures;
