@@ -6,7 +6,9 @@
 // import lessonTextures from './js/lessons/lesson-textures';
 // import lessonText from './js/lessons/lesson-text';
 // import lessonLights from './js/lessons/lesson-lights';
-import lessonHautedHouse from './js/lessons/haunted-house';
+// import lessonHautedHouse from './js/lessons/haunted-house';
+// import lessonParticles from './js/lessons/lesson-particles';
+import galaxy from './js/lessons/galaxy';
 import './scss/main.scss';
 
 // basicScene();
@@ -14,4 +16,6 @@ import './scss/main.scss';
 // lessonTextures();
 // lessonText();
 // lessonLights();
-lessonHautedHouse();
+// lessonHautedHouse();
+// lessonParticles();
+galaxy();

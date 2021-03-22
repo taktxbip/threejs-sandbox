@@ -28,8 +28,8 @@ const fog = new THREE.Fog('#262837', 1, 15);
 scene.fog = fog;
 
 const renderer = new THREE.WebGLRenderer({ canvas: canvas });
-renderer.shadowMap.enabled = false;
-renderer.shadowMap.type = THREE.PCFShadowMap;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 200);
 
 /*
@@ -76,6 +76,11 @@ grassAmbientOcclusionTexture.wrapT = THREE.RepeatWrapping;
 grassNormalTexture.wrapT = THREE.RepeatWrapping;
 grassRoughnessTexture.wrapT = THREE.RepeatWrapping;
 
+const ghost1 = new THREE.PointLight('#ff00ff', 2, 3);
+const ghost2 = new THREE.PointLight('#00ffff', 2, 3);
+const ghost3 = new THREE.PointLight('#ffff00', 2, 3);
+scene.add(ghost1, ghost2, ghost3);
+
 function lessonHautedHouse() {
 
     window.addEventListener('resize', () => {
@@ -115,8 +120,28 @@ function lessonHautedHouse() {
     const ambientLight = new THREE.AmbientLight('#b9d5ff', 0.12);
     const directionalLight = new THREE.DirectionalLight('#b9d5ff', 0.12);
     const doorLight = new THREE.PointLight('#ff7d46', 1, 7);
-    doorLight.position.set(0, 2.2, 2.7);
+    directionalLight.castShadow = true;
+    doorLight.castShadow = true;
+    doorLight.shadow.mapSize.width = 256;
+    doorLight.shadow.mapSize.height = 256;
+    doorLight.shadow.camera.far = 7;
 
+    ghost1.castShadow = true;
+    ghost1.shadow.mapSize.width = 256;
+    ghost1.shadow.mapSize.height = 256;
+    ghost1.shadow.camera.far = 7;
+
+    ghost2.castShadow = true;
+    ghost2.shadow.mapSize.width = 256;
+    ghost2.shadow.mapSize.height = 256;
+    ghost2.shadow.camera.far = 7;
+
+    ghost3.castShadow = true;
+    ghost3.shadow.mapSize.width = 256;
+    ghost3.shadow.mapSize.height = 256;
+    ghost3.shadow.camera.far = 7;
+
+    doorLight.position.set(0, 2.2, 2.7);
 
     scene.add(directionalLight, ambientLight);
 
@@ -135,6 +160,7 @@ function lessonHautedHouse() {
             roughnessMap: grassRoughnessTexture
         })
     );
+    plane.receiveShadow = true;
     plane.geometry.setAttribute(
         'uv2',
         new THREE.Float32BufferAttribute(plane.geometry.attributes.uv.array, 2)
@@ -149,6 +175,7 @@ function lessonHautedHouse() {
             roughnessMap: bricksRoughnessTexture
         })
     );
+    walls.castShadow = true;
     walls.geometry.setAttribute(
         'uv2',
         new THREE.Float32BufferAttribute(walls.geometry.attributes.uv.array, 2)
@@ -201,6 +228,11 @@ function lessonHautedHouse() {
     bush4.scale.set(0.15, 0.15, 0.15);
     bush4.position.set(-1, 0.05, 2.6);
 
+    bush1.castShadow = true;
+    bush2.castShadow = true;
+    bush3.castShadow = true;
+    bush4.castShadow = true;
+
     house.add(walls, roof, door, bush1, bush2, bush3, bush4, doorLight);
     scene.add(house);
 
@@ -219,6 +251,7 @@ function lessonHautedHouse() {
         grave.position.set(x, 0.4 / 2, z);
         grave.rotation.y = (Math.random() - 0.5) * Math.PI * 0.2;
         grave.rotation.z = (Math.random() - 0.5) * Math.PI * 0.1;
+        grave.castShadow = true;
 
         graves.add(grave);
     }
@@ -253,6 +286,21 @@ function lessonHautedHouse() {
 
         // Clock
         const elapsedTime = clock.getElapsedTime();
+
+        const angle = elapsedTime;
+        ghost1.position.x = Math.sin(angle) * 4;
+        ghost1.position.z = Math.cos(angle) * 4;
+        ghost1.position.y = Math.sin(angle * 3);
+
+        const angle2 = - elapsedTime * 0.3;
+        ghost2.position.x = Math.sin(angle2) * 5;
+        ghost2.position.z = Math.cos(angle2) * 5;
+        ghost2.position.y = Math.sin(elapsedTime * 4) + Math.sin(elapsedTime * 2.5);
+
+        const angle3 = - elapsedTime * 0.3;
+        ghost3.position.x = Math.sin(angle3) * (7 + Math.sin(elapsedTime * 0.32));
+        ghost3.position.z = Math.cos(angle3) * (7 + Math.sin(elapsedTime * 0.5));
+        ghost3.position.y = Math.sin(elapsedTime * 4) * Math.sin(elapsedTime * 2.5);
 
         controls.update();
         renderer.render(scene, camera);
