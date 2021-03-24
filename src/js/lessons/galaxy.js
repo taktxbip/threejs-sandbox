@@ -45,14 +45,37 @@ const particleTexture = textureLoader.load('/src/images/particles/2.png');
 /* 
 * Galaxy
 */
-
 const parameters = {
-    count: 1000
+    count: 1000,
+    size: 0.02
 };
 gui.add(parameters, 'count', 1000, 50000, 20);
 
 const generateGalaxy = () => {
+    const geometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(parameters.count * 3);
+    for (let i = 0; i < parameters.count; i++) {
+        const i3 = i * 3;
+        positions[i3 + 0] = Math.random();
+        positions[i3 + 1] = Math.random();
+        positions[i3 + 2] = Math.random();
+    }
 
+    geometry.setAttribute(
+        'position',
+        new THREE.BufferAttribute(positions, 3)
+    );
+
+    // Material
+    const material = new THREE.PointsMaterial({
+        size: parameters.size,
+        sizeAttenuation: true,
+        depthWrite: false,
+        blending: THREE.Addititive
+    });
+
+    // Points 
+    const points = new THREE.Points(g)
 };
 
 generateGalaxy();

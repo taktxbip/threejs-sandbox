@@ -8,7 +8,11 @@
 // import lessonLights from './js/lessons/lesson-lights';
 // import lessonHautedHouse from './js/lessons/haunted-house';
 // import lessonParticles from './js/lessons/lesson-particles';
-import galaxy from './js/lessons/galaxy';
+// import galaxy from './js/lessons/galaxy';
+// import importModels from './js/lessons/raycaster';
+// import lRaycaster from './js/lessons/raycaster';
+// import realisticRender from './js/lessons/realistic-render';
+import lPostprocessing from './js/lessons/lpostprocessing';
 import './scss/main.scss';
 
 // basicScene();
@@ -18,4 +22,8 @@ import './scss/main.scss';
 // lessonLights();
 // lessonHautedHouse();
 // lessonParticles();
-galaxy();
+// galaxy();
+// importModels();
+// lRaycaster();
+// realisticRender();
+lPostprocessing();
