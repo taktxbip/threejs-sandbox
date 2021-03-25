@@ -12,7 +12,8 @@
 // import importModels from './js/lessons/raycaster';
 // import lRaycaster from './js/lessons/raycaster';
 // import realisticRender from './js/lessons/realistic-render';
-import lPostprocessing from './js/lessons/lpostprocessing';
+// import lPostprocessing from './js/lessons/lpostprocessing';
+import lLoader from './js/lessons/l-loader';
 import './scss/main.scss';
 
 // basicScene();
@@ -26,4 +27,5 @@ import './scss/main.scss';
 // importModels();
 // lRaycaster();
 // realisticRender();
-lPostprocessing();
+// lPostprocessing();
+lLoader();
