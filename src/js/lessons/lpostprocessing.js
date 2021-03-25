@@ -3,14 +3,25 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import * as dat from 'dat.gui';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
+import { DotScreenPass } from 'three/examples/jsm/postprocessing/DotScreenPass';
+import { GlitchPass } from 'three/examples/jsm/postprocessing/GlitchPass';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass';
+import { SMAAPass } from 'three/examples/jsm/postprocessing/SMAAPass';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass';
+import { RGBShiftShader } from 'three/examples/jsm/shaders/RGBShiftShader';
+import { TextureLoader } from 'three';
+// import { GeometryUtils, LinearFilter } from 'three';
 
 const scene = new THREE.Scene();
 
+// EffectComposer();
 const gui = new dat.GUI();
+// gui.hide();
 const debugObject = {
     envMapIntensity: 5
 };
-// gui.hide();
 
 const axes = new THREE.AxesHelper();
 scene.add(axes);
@@ -21,6 +32,7 @@ const sizes = {
 };
 
 const canvas = document.querySelector('.webgl');
+const textureLoader = new TextureLoader();
 const cubeTextureLoader = new THREE.CubeTextureLoader();
 
 // Update all materials
@@ -37,7 +49,7 @@ const updateAllMaterials = () => {
 };
 
 // Textures
-const map = 1;
+const map = 0;
 const environmentMapTexture = cubeTextureLoader.load([
     `/src/images/environmentMaps/${map}/px.jpg`,
     `/src/images/environmentMaps/${map}/nx.jpg`,
@@ -65,6 +77,7 @@ scene.add(directionalLight);
 // scene.add(directionalLightCameraHelper);
 
 // Models 
+const helmet = new THREE.Group();
 const gltfLoader = new GLTFLoader();
 gltfLoader.load(
     // '/src/models/FlightHelmet/glTF/FlightHelmet.gltf',
@@ -73,7 +86,8 @@ gltfLoader.load(
         gltf.scene.scale.set(1, 1, 1);
         gltf.scene.position.set(0, 0, 0);
         gltf.scene.rotation.y = - 0.3;
-        scene.add(gltf.scene);
+        helmet.add(gltf.scene);
+        scene.add(helmet);
 
         gui.add(gltf.scene.rotation, 'y', -Math.PI, Math.PI, 0.01).name('Rotation');
 
@@ -101,6 +115,10 @@ function lPostprocessing() {
 
         // Update renderer
         renderer.setSize(sizes.width, sizes.height);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+        effectComposer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        effectComposer.setSize(sizes.width, sizes.height);
     });
 
     /* 
@@ -121,12 +139,146 @@ function lPostprocessing() {
     renderer.physicallyCorrectLights = true;
     renderer.outputEncoding = THREE.sRGBEncoding;
     // renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 3;
     renderer.toneMapping = THREE.ReinhardToneMapping;
     // renderer.toneMapping = THREE.CineonToneMapping;
+    renderer.toneMappingExposure = 3;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
+    let RenderTargetClass = null;
+
+    if (renderer.getPixelRatio() === 1 && renderer.capabilities.isWebGL2) {
+        RenderTargetClass = THREE.WebGLMultisampleRenderTarget;
+    }
+    else {
+        RenderTargetClass = THREE.WebGLRenderTarget;
+    }
+    const renderTarget = new RenderTargetClass(
+        800, 600, {
+        minFilter: THREE.LinearFilter,
+        magFilter: THREE.LinearFilter,
+        format: THREE.RGBAFormat,
+        encoding: THREE.sRGBEncoding
+    }
+    );
+
+    // Composer
+    const effectComposer = new EffectComposer(renderer, renderTarget);
+    effectComposer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    effectComposer.setSize(sizes.width, sizes.height);
+
+    const renderPass = new RenderPass(scene, camera);
+    effectComposer.addPass(renderPass);
+
+    const dotScreenPass = new DotScreenPass();
+    dotScreenPass.enabled = false;
+    effectComposer.addPass(dotScreenPass);
+
+    const glitchPass = new GlitchPass();
+    glitchPass.enabled = false;
+    effectComposer.addPass(glitchPass);
+
+    const rgbShiftPass = new ShaderPass(RGBShiftShader);
+    rgbShiftPass.enabled = false;
+    effectComposer.addPass(rgbShiftPass);
+
+    const unrealBloomPass = new UnrealBloomPass();
+    unrealBloomPass.enabled = true;
+    unrealBloomPass.radius = 1;
+    unrealBloomPass.strength = 0.3;
+    unrealBloomPass.threshold = 0.6;
+    effectComposer.addPass(unrealBloomPass);
+
+    gui.add(unrealBloomPass, 'enabled');
+    gui.add(unrealBloomPass, 'strength', 0, 2, 0.001);
+    gui.add(unrealBloomPass, 'radius', 0, 2, 0.001);
+    gui.add(unrealBloomPass, 'threshold', 0, 1, 0.001);
+
+
+    // Tint pass
+    const TintShader = {
+        uniforms: {
+            tDiffuse: { value: null },
+            uTint: { value: null }
+        },
+        vertexShader: `
+        varying vec2 vUv;
+        void main()
+        {
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            vUv = uv;
+        }
+        `,
+        fragmentShader: `
+        uniform sampler2D tDiffuse;
+
+        uniform vec3 uTint;
+        varying vec2 vUv;
+
+        void main()
+        {
+            vec4 color = texture2D(tDiffuse, vUv);
+            color.rgb += uTint;
+
+            gl_FragColor = color;
+        }
+        `
+    };
+    const tintPass = new ShaderPass(TintShader);
+    tintPass.enabled = false;
+    tintPass.material.uniforms.uTint.value = new THREE.Vector3(0.2, 0, 0);
+    effectComposer.addPass(tintPass);
+
+
+    // Displacement pass
+    const DisplacementShader = {
+        uniforms: {
+            tDiffuse: { value: null },
+            uNormalMap: { value: null }
+        },
+        vertexShader: `
+            varying vec2 vUv;
+            void main()
+            {
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                vUv = uv;
+            }
+            `,
+        fragmentShader: `
+            uniform sampler2D tDiffuse;
+            uniform sampler2D uNormalMap;
+    
+            varying vec2 vUv;
+    
+            void main()
+            {
+                vec3 normalColor = texture2D(uNormalMap, vUv).xyz * 2.0 - 1.0;
+
+                vec2 newUv = vUv + normalColor.xy * 0.1;
+                vec4 color = texture2D(tDiffuse, newUv);
+    
+                vec3 lightDirection = normalize(vec3(-1.0, 1.0, 0.0));
+                float lightness = clamp(dot(normalColor, lightDirection), 0.0, 1.0);
+                color.rgb += lightness * 2.0;
+
+                gl_FragColor = color;
+            }
+            `
+    };
+    const displacementPass = new ShaderPass(DisplacementShader);
+    displacementPass.material.uniforms.uNormalMap.value = textureLoader.load('/src/images/interfaceNormalMap.png');
+    // displacementPass.material.uniforms.uTime.value = 0;
+    effectComposer.addPass(displacementPass);
+
+
+    gui.add(tintPass.material.uniforms.uTint.value, 'x', -1, 1, 0.001).name('RedTint');
+    gui.add(tintPass.material.uniforms.uTint.value, 'y', -1, 1, 0.001).name('GreenTint');
+    gui.add(tintPass.material.uniforms.uTint.value, 'z', -1, 1, 0.001).name('BlueTint');
+
+    if (renderer.getPixelRatio() === 1 && !renderer.capabilities.isWebGL2) {
+        const smaaPass = new SMAAPass();
+        effectComposer.addPass(smaaPass);
+    }
 
     gui.add(renderer, 'toneMapping', {
         No: THREE.NoToneMapping,
@@ -134,7 +286,7 @@ function lPostprocessing() {
         Reinhart: THREE.ReinhardToneMapping,
         Cineon: THREE.CineonToneMapping,
         AcesFilmic: THREE.ACESFilmicToneMapping
-    }).onFinishChange(()=>{
+    }).onFinishChange(() => {
         renderer.toneMapping = Number(renderer.toneMapping);
         updateAllMaterials();
     });
@@ -148,8 +300,13 @@ function lPostprocessing() {
         // Clock
         const elapsedTime = clock.getElapsedTime();
 
+        // Update passes
+        // displacementPass.material.uniforms.uTime.value = elapsedTime;
+
+        helmet.rotation.y = elapsedTime * 0.4;
         controls.update();
-        renderer.render(scene, camera);
+        effectComposer.render();
+        // renderer.render(scene, camera);
         window.requestAnimationFrame(tick);
     };
 
