@@ -4,6 +4,7 @@ import gsap from 'gsap';
 import * as dat from 'dat.gui';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
 
 
 // import imagew from '/src/images/door/color.jpg';
@@ -14,7 +15,7 @@ const axes = new THREE.AxesHelper();
 scene.add(axes);
 
 const gui = new dat.GUI();
-// gui.hide();
+gui.hide();
 
 const sizes = {
     width: window.innerWidth,
@@ -23,11 +24,23 @@ const sizes = {
 
 const canvas = document.querySelector('.webgl');
 
+const dracoLoader = new DRACOLoader();
+dracoLoader.setDecoderPath('/src/js/draco/');
+
 // Models 
 const gltfLoader = new GLTFLoader();
+gltfLoader.setDRACOLoader(dracoLoader);
+
+let mixer = null;
+
 gltfLoader.load(
-    '/src/models/FlightHelmet/glTF/FlightHelmet.gltf',
+    // '/src/models/FlightHelmet/glTF/FlightHelmet.gltf',
+    // '/src/models/Duck/glTF-Draco/Duck.gltf',
+    '/src/models/Fox/glTF/Fox.gltf',
     (gltf) => {
+        mixer = new THREE.AnimationMixer(gltf.scene);
+        const action = mixer.clipAction(gltf.animations[2]);
+        action.play();
         // scene.add(gltf.scene.children[0]);
         // while(gltf.scene.children.length) {
         //     scene.add(gltf.scene.children[0]);
@@ -36,13 +49,11 @@ gltfLoader.load(
         // for (const child of children) {
         //     scene.add(child);
         // }
+        console.log(gltf);
+        gltf.scene.scale.set(0.025, 0.025, 0.025);
         scene.add(gltf.scene);
     }
 );
-
-// Fog
-const fog = new THREE.Fog('#262837', 1, 15);
-scene.fog = fog;
 
 
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
@@ -63,7 +74,6 @@ loadingManager.onProgress = () => console.log('onProgress');
 loadingManager.onError = () => console.log('onError');
 
 const textureLoader = new THREE.TextureLoader(loadingManager);
-const particleTexture = textureLoader.load('/src/images/particles/2.png');
 
 /* 
 * Galaxy
@@ -126,12 +136,17 @@ function importModels() {
 
     // Clock
     const clock = new THREE.Clock();
+    let previousTime = 0;
     // Animations
     const tick = () => {
 
         // Clock
         const elapsedTime = clock.getElapsedTime();
+        const deltaTime = elapsedTime - previousTime;
+        previousTime = elapsedTime;
 
+        if (mixer !== null)
+            mixer.update(deltaTime);
 
         controls.update();
         renderer.render(scene, camera);
