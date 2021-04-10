@@ -9,7 +9,8 @@
 // import lessonHautedHouse from './js/lessons/haunted-house';
 // import lessonParticles from './js/lessons/lesson-particles';
 // import galaxy from './js/lessons/galaxy';
-import physics from './js/lessons/physics';
+// import './js/lessons/physics';
+import './js/lessons/shaders';
 // import importModels from './js/lessons/import-models';
 // import lRaycaster from './js/lessons/raycaster';
 // import realisticRender from './js/lessons/realistic-render';
@@ -30,4 +31,3 @@ import './scss/main.scss';
 // realisticRender();
 // lPostprocessing();
 // lLoader();
-physics();
