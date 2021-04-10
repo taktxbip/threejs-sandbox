@@ -1,3 +1,5 @@
+'use strict';
+
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const autoprefixer = require('autoprefixer');
@@ -30,7 +32,7 @@ module.exports = (env = {}) => {
 
     const runShell = () => {
         switch (process.platform) {
-            case 'win32' : return [
+            case 'win32': return [
                 ''
             ];
             case 'linux': return [
@@ -111,6 +113,13 @@ module.exports = (env = {}) => {
                             name: '[name].[ext]'
                         }
                     }]
+                },
+
+                // Shaders
+                {
+                    test: /\.(glsl)$/,
+                    exclude: /node_modules/,
+                    use: ['raw-loader']
                 },
 
                 // Loading CSS

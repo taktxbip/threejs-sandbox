@@ -3,6 +3,8 @@ import * as THREE from 'three';
 // import gsap from 'gsap';
 import * as dat from 'dat.gui';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import testVertexShader from '../shaders/test/vertex.glsl';
+import testFragmentShader from '../shaders/test/fragement.glsl';
 // import { Vector3 } from 'three';
 
 // import imagew from '/src/images/door/color.jpg';
@@ -59,10 +61,12 @@ pointLight.castShadow = true;
 
 
 const planeMesh = new THREE.Mesh(
-    new THREE.PlaneBufferGeometry(100, 100),
-    new THREE.MeshStandardMaterial({ color: '#f5f5f5' })
+    new THREE.PlaneBufferGeometry(3, 3),
+    new THREE.RawShaderMaterial({
+        vertexShader: testVertexShader,
+        fragmentShader: testFragmentShader
+    })
 );
-planeMesh.rotation.x = - Math.PI / 2;
 planeMesh.receiveShadow = true;
 
 
