@@ -3,8 +3,8 @@ import * as THREE from 'three';
 // import gsap from 'gsap';
 import * as dat from 'dat.gui';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import testVertexShader from '../shaders/test/vertex.glsl';
-import testFragmentShader from '../shaders/test/fragement.glsl';
+import testVertexShader from '../shaders/test-pattern/vertex.glsl';
+import testFragmentShader from '../shaders/test-pattern/fragement.glsl';
 // import { Vector3 } from 'three';
 
 // import imagew from '/src/images/door/color.jpg';
@@ -40,25 +40,18 @@ loadingManager.onStart = () => console.log('onStart');
 loadingManager.onLoaded = () => console.log('onLoaded');
 loadingManager.onProgress = () => console.log('onProgress');
 loadingManager.onError = () => console.log('onError');
-const textureLoader = new THREE.TextureLoader();
-const flagTexture = textureLoader.load('/src/images/flag-french.jpg');
 
 const pointLight = new THREE.PointLight('#fff', 0.5, 10, 1);
 const ambientLight = new THREE.AmbientLight('#fff', 0.7);
 pointLight.position.set(-1, 2, -1);
 pointLight.castShadow = true;
 
-const planeGeometry = new THREE.PlaneBufferGeometry(3, 2, 100, 100);
+const planeGeometry = new THREE.PlaneBufferGeometry(3, 3, 100, 100);
 
 const planeMaterial = new THREE.ShaderMaterial({
     vertexShader: testVertexShader,
     fragmentShader: testFragmentShader,
-    uniforms: {
-        uFrequency: { value: new THREE.Vector2(3, 2) },
-        uTime: { value: 0 },
-        uColor: { value: new THREE.Color('orange') },
-        uTexture: { value: flagTexture }
-    }
+    side: THREE.DoubleSide
 });
 
 const planeMesh = new THREE.Mesh(
@@ -67,8 +60,6 @@ const planeMesh = new THREE.Mesh(
 );
 planeMesh.receiveShadow = true;
 
-gui.add(planeMaterial.uniforms.uFrequency.value, 'x').min(0).max(20).step(0.01);
-gui.add(planeMaterial.uniforms.uFrequency.value, 'y').min(0).max(20).step(0.01);
 
 const count = planeGeometry.attributes.position.count;
 const randoms = new Float32Array(count);
@@ -123,7 +114,6 @@ const tick = () => {
     // Clock 
     const elapsedTime = clock.getElapsedTime();
 
-    planeMaterial.uniforms.uTime.value = elapsedTime;
     // Update physics
     // sphereBody.applyForce(new CANNON.Vec3(-0.5, 0, 0), sphereBody.position);
 

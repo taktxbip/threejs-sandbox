@@ -10,7 +10,8 @@
 // import lessonParticles from './js/lessons/lesson-particles';
 // import galaxy from './js/lessons/galaxy';
 // import './js/lessons/physics';
-import './js/lessons/shaders';
+// import './js/lessons/shaders';
+import './js/lessons/shader-patterns';
 // import importModels from './js/lessons/import-models';
 // import lRaycaster from './js/lessons/raycaster';
 // import realisticRender from './js/lessons/realistic-render';
