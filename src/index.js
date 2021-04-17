@@ -11,7 +11,8 @@
 // import galaxy from './js/lessons/galaxy';
 // import './js/lessons/physics';
 // import './js/lessons/shaders';
-import './js/lessons/shader-patterns';
+// import './js/lessons/shader-patterns';
+import './js/lessons/raging-sea';
 // import importModels from './js/lessons/import-models';
 // import lRaycaster from './js/lessons/raycaster';
 // import realisticRender from './js/lessons/realistic-render';
