@@ -90,7 +90,7 @@ const generateGalaxy = () => {
 
         // color 
         const colorMixed = colorInside.clone();
-        colorMixed.lerp(colorOutside, radius /parameters.radius);
+        colorMixed.lerp(colorOutside, radius / parameters.radius);
 
         colors[i3] = colorMixed.r;
         colors[i3 + 1] = colorMixed.g;
@@ -144,72 +144,68 @@ for (let i = 0; i < count * 3; i++) {
 }
 
 
-function galaxy() {
 
-    window.addEventListener('resize', () => {
-        sizes.width = window.innerWidth;
-        sizes.height = window.innerHeight;
+window.addEventListener('resize', () => {
+    sizes.width = window.innerWidth;
+    sizes.height = window.innerHeight;
 
-        // Update camera
-        camera.aspect = sizes.width / sizes.height;
-        camera.updateProjectionMatrix();
+    // Update camera
+    camera.aspect = sizes.width / sizes.height;
+    camera.updateProjectionMatrix();
 
-        // Update renderer
-        renderer.setSize(sizes.width, sizes.height);
-    });
-    window.addEventListener('dblclick', function () {
-        const fillscreenElement = document.fullscreenElement || document.webkitFullscreenElement;
-        if (!fillscreenElement) {
-            if (canvas.requestFullscreen) {
-                canvas.requestFullscreen();
-            }
-            else if (canvas.webkitRequestFullscreen) {
-                canvas.webkitRequestFullscreen();
-            }
-        }
-        else {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            }
-            else if (document.webkitExitFullscreen) {
-                document.webkitExitFullscreen();
-            }
-        }
-    });
-    /* 
-    Lights 
-    */
-    scene.add(camera);
-    camera.position.z = 2;
-    camera.position.y = 1;
-    camera.position.x = 1;
-
-    // Controls 
-    const controls = new OrbitControls(camera, canvas);
-    controls.enableDamping = true;
-
+    // Update renderer
     renderer.setSize(sizes.width, sizes.height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setClearColor('#262837');
+});
+window.addEventListener('dblclick', function () {
+    const fillscreenElement = document.fullscreenElement || document.webkitFullscreenElement;
+    if (!fillscreenElement) {
+        if (canvas.requestFullscreen) {
+            canvas.requestFullscreen();
+        }
+        else if (canvas.webkitRequestFullscreen) {
+            canvas.webkitRequestFullscreen();
+        }
+    }
+    else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        }
+        else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        }
+    }
+});
+/* 
+Lights 
+*/
+scene.add(camera);
+camera.position.z = 2;
+camera.position.y = 1;
+camera.position.x = 1;
 
-    // Time
-    // let time = Date.now();
+// Controls 
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+
+renderer.setSize(sizes.width, sizes.height);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setClearColor('#262837');
+
+// Time
+// let time = Date.now();
+
+// Clock
+const clock = new THREE.Clock();
+// Animations
+const tick = () => {
 
     // Clock
-    const clock = new THREE.Clock();
-    // Animations
-    const tick = () => {
-
-        // Clock
-        const elapsedTime = clock.getElapsedTime();
+    const elapsedTime = clock.getElapsedTime();
 
 
-        controls.update();
-        renderer.render(scene, camera);
-        window.requestAnimationFrame(tick);
-    };
+    controls.update();
+    renderer.render(scene, camera);
+    window.requestAnimationFrame(tick);
+};
 
-    tick();
-}
-
-export default galaxy;
+tick();
