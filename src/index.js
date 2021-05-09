@@ -8,14 +8,15 @@
 // import lessonLights from './js/lessons/lesson-lights';
 // import lessonHautedHouse from './js/lessons/haunted-house';
 // import lessonParticles from './js/lessons/lesson-particles';
-import './js/lessons/galaxy';
+// import './js/lessons/galaxy';
 // import './js/lessons/physics';
 // import './js/lessons/shaders';
 // import './js/lessons/shader-patterns';
 // import './js/lessons/raging-sea';
 // import importModels from './js/lessons/import-models';
 // import lRaycaster from './js/lessons/raycaster';
-// import realisticRender from './js/lessons/realistic-render';
+// import './js/lessons/realistic-render';
+import './js/lessons/modified-materials';
 // import lPostprocessing from './js/lessons/lpostprocessing';
 // import lLoader from './js/lessons/l-loader';
 import './scss/main.scss';

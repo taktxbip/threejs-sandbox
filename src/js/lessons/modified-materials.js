@@ -5,15 +5,13 @@ import * as dat from 'dat.gui';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 const scene = new THREE.Scene();
+const textureLoader = new THREE.TextureLoader();
 
 const gui = new dat.GUI();
 const debugObject = {
     envMapIntensity: 5
 };
 // gui.hide();
-
-const axes = new THREE.AxesHelper();
-scene.add(axes);
 
 const sizes = {
     width: window.innerWidth,
@@ -27,7 +25,6 @@ const cubeTextureLoader = new THREE.CubeTextureLoader();
 const updateAllMaterials = () => {
     scene.traverseVisible(child => {
         if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
-            // child.material.envMap = environmentMapTexture;
             child.material.envMapIntensity = debugObject.envMapIntensity;
             child.material.needsUpdate = true;
             child.castShadow = true;
@@ -37,7 +34,7 @@ const updateAllMaterials = () => {
 };
 
 // Textures
-const map = 1;
+const map = 0;
 const environmentMapTexture = cubeTextureLoader.load([
     `/src/images/environmentMaps/${map}/px.jpg`,
     `/src/images/environmentMaps/${map}/nx.jpg`,
@@ -61,23 +58,67 @@ directionalLight.position.set(0.25, 3, -2.25);
 directionalLight.shadow.normalBias = 0.02;
 scene.add(directionalLight);
 
-// const directionalLightCameraHelper = new THREE.CameraHelper(directionalLight.shadow.camera);
-// scene.add(directionalLightCameraHelper);
 
 // Models 
+// Textures
+const mapTexture = textureLoader.load('/src/models/LeePerrySmith/color.jpg');
+mapTexture.encoding = THREE.sRGBEncoding;
+
+const normalTexture = textureLoader.load('/src/models/LeePerrySmith/normal.jpg');
+
+// Material
+const material = new THREE.MeshStandardMaterial({
+    map: mapTexture,
+    normalMap: normalTexture
+});
+
+const customUniforms = {
+    uTime: { value: 0 }
+};
+
+material.onBeforeCompile = (shader) => {
+    shader.uniforms.uTime = customUniforms.uTime;
+    shader.vertexShader = shader.vertexShader.replace(
+        '#include <begin_vertex>',
+        `
+            #include <begin_vertex>
+            float angle = 1.2 * transformed.y;
+
+            mat2 rotateMatrix = get2dRotateMatrix(angle * uTime * 0.1);
+
+            transformed.xz = rotateMatrix * transformed.xz;
+        `
+    );
+    shader.vertexShader = shader.vertexShader.replace(
+        '#include <common>',
+        `
+            #include <common>
+            uniform float uTime;
+
+            mat2 get2dRotateMatrix(float _angle)
+            {
+                return mat2(cos(_angle), - sin(_angle), sin(_angle), cos(_angle));
+            }
+        `
+    );
+};
+
 const gltfLoader = new GLTFLoader();
 gltfLoader.load(
-    // '/src/models/FlightHelmet/glTF/FlightHelmet.gltf',
-    '/src/models/hamburger.glb',
+    '/src/models/LeePerrySmith/LeePerrySmith.glb',
     (gltf) => {
-        gltf.scene.scale.set(0.3, 0.3, 0.3);
-        gltf.scene.position.set(0, -2, 0);
-        gltf.scene.rotation.y = - 0.3;
-        scene.add(gltf.scene);
+        // Model
+        const mesh = gltf.scene.children[0];
+        mesh.rotation.y = Math.PI * 0.5;
+        mesh.material = material;
+        scene.add(mesh);
+
+        // Update materials
+        updateAllMaterials()
 
         gui.add(gltf.scene.rotation, 'y', -Math.PI, Math.PI, 0.01).name('Rotation');
 
-        updateAllMaterials();
+        // updateAllMaterials();
     }
 );
 
@@ -146,6 +187,8 @@ const tick = () => {
 
     // Clock
     const elapsedTime = clock.getElapsedTime();
+
+    customUniforms.uTime.value = elapsedTime;
 
     controls.update();
     renderer.render(scene, camera);
