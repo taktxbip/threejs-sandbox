@@ -71,6 +71,9 @@ const material = new THREE.MeshStandardMaterial({
     map: mapTexture,
     normalMap: normalTexture
 });
+const depthMaterial = new THREE.MeshDepthMaterial({
+    depthPacking: THREE.RGBADepthPacking
+});
 
 const customUniforms = {
     uTime: { value: 0 }
@@ -79,10 +82,45 @@ const customUniforms = {
 material.onBeforeCompile = (shader) => {
     shader.uniforms.uTime = customUniforms.uTime;
     shader.vertexShader = shader.vertexShader.replace(
+        '#include <common>',
+        `
+            #include <common>
+            uniform float uTime;
+
+            mat2 get2dRotateMatrix(float _angle)
+            {
+                return mat2(cos(_angle), - sin(_angle), sin(_angle), cos(_angle));
+            }
+        `
+    );
+    shader.vertexShader = shader.vertexShader.replace(
+        '#include <beginnormal_vertex>',
+        `
+            #include <beginnormal_vertex>
+
+            float angle = (sin(position.y + uTime)) * 0.4;
+            mat2 rotateMatrix = get2dRotateMatrix(angle);
+
+            objectNormal.xz = objectNormal.xz * rotateMatrix;
+        `
+    );
+    shader.vertexShader = shader.vertexShader.replace(
         '#include <begin_vertex>',
         `
             #include <begin_vertex>
-            float angle = 1.2 * transformed.y;
+
+            transformed.xz = rotateMatrix * transformed.xz;
+        `
+    );
+};
+
+depthMaterial.onBeforeCompile = (shader) => {
+    shader.uniforms.uTime = customUniforms.uTime;
+    shader.vertexShader = shader.vertexShader.replace(
+        '#include <begin_vertex>',
+        `
+            #include <begin_vertex>
+            float angle = (sin(position.y + uTime)) * 0.4;
 
             mat2 rotateMatrix = get2dRotateMatrix(angle * uTime * 0.1);
 
@@ -103,6 +141,15 @@ material.onBeforeCompile = (shader) => {
     );
 };
 
+const plane = new THREE.Mesh(
+    new THREE.PlaneBufferGeometry(15, 15),
+    new THREE.MeshStandardMaterial({ color: '#fff' })
+);
+plane.receiveShadow = true;
+plane.rotation.y = Math.PI / 2;
+plane.position.x = -5;
+scene.add(plane);
+
 const gltfLoader = new GLTFLoader();
 gltfLoader.load(
     '/src/models/LeePerrySmith/LeePerrySmith.glb',
@@ -111,6 +158,7 @@ gltfLoader.load(
         const mesh = gltf.scene.children[0];
         mesh.rotation.y = Math.PI * 0.5;
         mesh.material = material;
+        mesh.customDepthMaterial = depthMaterial;
         scene.add(mesh);
 
         // Update materials
@@ -122,6 +170,9 @@ gltfLoader.load(
     }
 );
 
+directionalLight.position.x = 4.192;
+directionalLight.position.y = 0;
+directionalLight.position.z = -0.035;
 gui.add(directionalLight, 'intensity', 0, 10, 0.001).name('LightIntensity');
 gui.add(directionalLight.position, 'x', -5, 5, 0.001).name('LightX');
 gui.add(directionalLight.position, 'y', 0, 5, 0.001).name('LightY');
@@ -147,9 +198,9 @@ window.addEventListener('resize', () => {
 Lights 
 */
 scene.add(camera);
-camera.position.z = 7;
-camera.position.y = 1;
-camera.position.x = 1;
+camera.position.z = 8;
+camera.position.y = 3;
+camera.position.x = 10;
 
 // Controls 
 const controls = new OrbitControls(camera, canvas);
